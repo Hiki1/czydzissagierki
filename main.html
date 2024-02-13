@@ -26,13 +26,16 @@
         var date = today.getDate();
         var month = today.getMonth() + 1; // JavaScript months are 0-11
 
-        // Check if today is the first Monday, Tuesday, or Wednesday of an odd month
-        var isFirstMTWOfOddMonth = (day >= 1 && day <= 3) && (date <= 7) && (month % 2 !== 0);
+        //Grupy poniedziałkowe oraz wtorkowe będą miały cały trening gier na drugich zajęciach w nieparzyste miesiące (np. 14 i 15 listopada), 
+        //a grupy środowe, czwartkowe, piątkowe i sobotnie na drugich zajęciach w parzyste miesiące (np. 8, 9, 10 i 14 grudnia)
 
-        // Check if today is the first Thursday or Friday of an even month
-        var isFirstTFOfEvenMonth = (day === 4 || day === 5) && (date <= 7) && (month % 2 === 0);
+        // Check if today is the second Monday or Tuesday of an odd month
+        var isSecondMTOfOddMonth = ((day === 1 || day === 2) && (date > 7 && date <= 14) && (month % 2 !== 0));
 
-        if (isFirstMTWOfOddMonth || isFirstTFOfEvenMonth) {
+        // Check if today is the second Wednesday, Thursday, Friday, or Saturday of an even month
+        var isSecondWTFOrSOfEvenMonth = ((day >= 3 && day <= 6) && (date > 7 && date <= 14) && (month % 2 === 0));
+
+        if (isSecondMTOfOddMonth || isSecondWTFOrSOfEvenMonth) {
             document.getElementById("result").innerHTML = "Tak";
         } else {
             document.getElementById("result").innerHTML = "Nie";
@@ -42,45 +45,47 @@
     </script>
 
 
-      <script>
-          // Get today's date
-          var today = new Date();
-          var month = today.getMonth();
-          var year = today.getFullYear();
-  
-          // Create a new date for the first day of the month
-          var firstDay = new Date(year, month, 1);
-          var dayOfWeek = firstDay.getDay();
-  
-          // Get the number of days in the month
-          var daysInMonth = new Date(year, month + 1, 0).getDate();
-  
-          // Create the calendar
-          var calendar = "<table><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr><tr>";
-  
-          // Fill in the days of the week
-          for (var i = 0; i < dayOfWeek; i++) {
-              calendar += "<td></td>";
-          }
-  
-          // Fill in the days of the month
-          for (var i = 1; i <= daysInMonth; i++) {
-              if (dayOfWeek === 7) {
-                  dayOfWeek = 0;
-                  calendar += "</tr><tr>";
-              }
-  
-              var isSpecialDay = ((dayOfWeek >= 1 && dayOfWeek <= 3) && (i <= 7) && (month % 2 !== 0)) || ((dayOfWeek === 4 || dayOfWeek === 5) && (i <= 7) && (month % 2 === 0));
-              calendar += "<td" + (isSpecialDay ? " class='special'" : "") + ">" + i + "</td>";
-  
-              dayOfWeek++;
-          }
-  
-          // Close the table
-          calendar += "</tr></table>";
-  
-          // Display the calendar
-          document.getElementById("calendar").innerHTML = calendar;
-      </script>
+<script>
+    // Get today's date
+    var today = new Date();
+    var month = today.getMonth();
+    var year = today.getFullYear();
+
+    // Create a new date for the first day of the month
+    var firstDay = new Date(year, month, 1);
+    var dayOfWeek = firstDay.getDay();
+
+    // Get the number of days in the month
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Create the calendar
+    var calendar = "<table><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr><tr>";
+
+    // Fill in the days of the week
+    for (var i = 0; i < dayOfWeek; i++) {
+        calendar += "<td></td>";
+    }
+
+    // Fill in the days of the month
+    for (var i = 1; i <= daysInMonth; i++) {
+        if (dayOfWeek === 7) {
+            dayOfWeek = 0;
+            calendar += "</tr><tr>";
+        }
+
+        var isSecondMTOfOddMonth = ((dayOfWeek === 1 || dayOfWeek === 2) && (i > 7 && i <= 14) && ((month + 1) % 2 !== 0));
+        var isSecondWTFOrSOfEvenMonth = ((dayOfWeek >= 3 && dayOfWeek <= 6) && (i > 7 && i <= 14) && ((month + 1) % 2 === 0));
+
+        calendar += "<td" + (isSecondMTOfOddMonth || isSecondWTFOrSOfEvenMonth ? " class='special'" : "") + ">" + i + "</td>";
+
+        dayOfWeek++;
+    }
+
+    // Close the table
+    calendar += "</tr></table>";
+
+    // Display the calendar
+    document.getElementById("calendar").innerHTML = calendar;
+</script>
 </body>
 </html>
