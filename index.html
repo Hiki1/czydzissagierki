@@ -25,31 +25,39 @@
     </div>
 
     <script>
-        //Grupy poniedziałkowe oraz wtorkowe będą miały cały trening gier na drugich zajęciach w nieparzyste miesiące (np. 14 i 15 listopada), 
+        //Grupy poniedziałkowe oraz wtorkowe będą miały cały trening gier na drugich zajęciach w nieparzyste miesiące (np. 14 i 15 listopada),
         //a grupy środowe, czwartkowe, piątkowe i sobotnie na drugich zajęciach w parzyste miesiące (np. 8, 9, 10 i 14 grudnia)
 
         // Get today's date
         var today = new Date();
         //today.setDate(today.getDate()+1);
-        var day = today.getDay();
         var date = today.getDate();
         var month = today.getMonth();
         var year = today.getFullYear();
 
+        function isGierkiDay(fullDate) {
+            var month = fullDate.getMonth();
+            var year = fullDate.getFullYear();
+            var isMonthEven = ((month + 1) % 2 === 0);
+            var dayOfWeek = fullDate.getDay();
+            var dayOfMonth = fullDate.getDate();
+
+            if (dayOfWeek === 0){
+                return false; // nie ma gierek w niedziele
+            }
+            else if (dayOfWeek === 1 || dayOfWeek === 2) {
+                return !isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
+            }
+             else {
+                return isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
+           }
+        }
         // Create a new date for the first day of the month
         var firstDay = new Date(year, month, 1);
         var dayOfWeek = (firstDay.getDay() + 6) % 7; // Adjust so Monday is 0, Sunday is 6
 
-        // Get the number of days in the month
-        var daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Check if today is the second Monday or Tuesday of an odd month
-        var isSecondMTOfOddMonth = ((day === 1 || day === 2) && (date > 7 && date <= 14) && ((month + 1) % 2 !== 0));
-
-        // Check if today is the second Wednesday, Thursday, Friday, or Saturday of an even month
-        var isSecondWTFOrSOfEvenMonth = ((day >= 3 && day <= 6) && (date > 7 && date <= 14) && ((month + 1) % 2 === 0));
-
-        if (isSecondMTOfOddMonth || isSecondWTFOrSOfEvenMonth) {
+        if (isGierkiDay(today)) {
             document.getElementById("result").innerHTML = "Tak";
             document.getElementById("result").classList.add('yes');
         } else {
@@ -67,17 +75,17 @@
             calendar += "<td></td>";
         }
 
+
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
         // Fill in the days of the month
         for (var i = 1; i <= daysInMonth; i++) {
             if (dayOfWeek === 7) {
                 dayOfWeek = 0;
                 calendar += "</tr><tr>";
             }
+            var calendarDay = new Date(year, month, i)
 
-            var isSecondMTOfOddMonth = ((dayOfWeek === 0 || dayOfWeek === 1) && (i > 7 && i <= 14) && ((month + 1) % 2 !== 0));
-            var isSecondWTFOrSOfEvenMonth = ((dayOfWeek >= 2 && dayOfWeek <= 5) && (i > 7 && i <= 14) && ((month + 1) % 2 === 0));
-
-            calendar += "<td" + (isSecondMTOfOddMonth || isSecondWTFOrSOfEvenMonth ? " class='special'" : "") + ">" + i + "</td>";
+            calendar += "<td" + (isGierkiDay(calendarDay) ? " class='special'" : "") + ">" + i + "</td>";
 
             dayOfWeek++;
         }
