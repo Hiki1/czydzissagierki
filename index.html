@@ -58,13 +58,13 @@
         var date = today.getDate();
         var month = today.getMonth();
         var year = today.getFullYear();
-        const api_url = "https://openholidaysapi.org/PublicHolidays?countryIsoCode=PL&validFrom=" + year + "-01-01&validTo="+ year +"-12-31";
+        const API_URL = "https://openholidaysapi.org/PublicHolidays?countryIsoCode=PL&validFrom=" + year + "-01-01&validTo="+ year +"-12-31";
 
         async function getHolidaysDates(year){
             // get a list of objects with the dates of holidays in Poland and return the list of startDates that are in the given year
             var holidaysDates = [];
             try {
-                const response = await fetch(api_url);
+                const response = await fetch(API_URL);
                 const data = await response.json();
                 for (var i = 0; i < data.length; i++){
                     var startDate = new Date(data[i].startDate);
@@ -117,26 +117,16 @@
                 var dayOfWeek = fullDate.getDay();
                 var dayOfMonth = fullDate.getDate();
 
-                if (dayOfWeek === 0){
+                if (dayOfWeek === 0) {
                     return false; // nie ma gierek w niedziele
                 }
-                else if (dayOfWeek === 1 || dayOfWeek === 2) {
-                    if (isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month)){
-                        // drugie zajęcia w 3 tygodniu gdy w pierwszym wypada świeto
-                        return !isMonthEven && (dayOfMonth > 14 && dayOfMonth <= 21);
-                    }
-                    else{
-                        return !isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
-                    }
-                }
-                else {
-                    if (isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month)){
-                        // drugie zajęcia w 3 tygodniu gdy w pierwszym wypada świeto
-                        return isMonthEven && (dayOfMonth > 14 && dayOfMonth <= 21);
-                    }
-                    else{
-                        return isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
-                    }
+                var isHolidayFirstOccurence = isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month);
+                var isInGierkiArea = isHolidayFirstOccurence ? (dayOfMonth > 14 && dayOfMonth <= 21) : (dayOfMonth > 7 && dayOfMonth <= 14);
+                
+                if (dayOfWeek === 1 || dayOfWeek === 2) {
+                    return !isMonthEven && isInGierkiArea;
+                } else {
+                    return isMonthEven && isInGierkiArea;
                 }
             }
             // Create a new date for the first day of the month
