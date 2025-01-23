@@ -4,7 +4,11 @@
     <title>Czy dziś są gierki?</title>
     <style>
         .special { background-color: yellow; }
+        .holiday { background-color: lightslategray; }
+        .gierki { background-color: limegreen; }
         .date {font-size: 2.7vw;color: dimgrey;}
+        .today {font-weight: bold;}
+        .normal {color: black;}
         .yes {color: forestgreen;}
         .no {color: darkred;}
         .center {
@@ -12,6 +16,24 @@
             width: 60%;
             padding: 10px;
             font-size: 4.2vw;
+        }
+        th{
+            border-bottom: 2px solid black;
+            border-right: 2px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        td{
+            border: 2px solid lightslategrey;
+            padding: 10px;
+            text-align: center;
+        }
+        table{
+            border: 6px solid lightslategray;
+        }
+        p.center {
+            font-style: italic;
+            font-size: 1.5vw;
         }
     </style>
 </head>
@@ -28,73 +50,157 @@
         //Grupy poniedziałkowe oraz wtorkowe będą miały cały trening gier na drugich zajęciach w nieparzyste miesiące (np. 14 i 15 listopada),
         //a grupy środowe, czwartkowe, piątkowe i sobotnie na drugich zajęciach w parzyste miesiące (np. 8, 9, 10 i 14 grudnia)
 
+        // Wyjątkiem (dyskretnie zawartym w regule powyzej) jest sytuacja gdy pierwszy dany dzień tygodnia w miesiącu jest świętem. Przykładowo 6.01.2025- pierwszy poniedziałęk roku to święto, więc pierwsze zajęcia przypadają na 13.01.2025 i wtedy drugie zajęcia będą 20.01.2025 i to wtedy są gierki. 
+
+
         // Get today's date
         var today = new Date();
-        //today.setDate(today.getDate()+1);
         var date = today.getDate();
         var month = today.getMonth();
         var year = today.getFullYear();
+        const api_url = "https://openholidaysapi.org/PublicHolidays?countryIsoCode=PL&validFrom=" + year + "-01-01&validTo="+ year +"-12-31";
 
-        function isGierkiDay(fullDate) {
-            var month = fullDate.getMonth();
-            var year = fullDate.getFullYear();
-            var isMonthEven = ((month + 1) % 2 === 0);
-            var dayOfWeek = fullDate.getDay();
-            var dayOfMonth = fullDate.getDate();
-
-            if (dayOfWeek === 0){
-                return false; // nie ma gierek w niedziele
+        async function getHolidaysDates(year){
+            // get a list of objects with the dates of holidays in Poland and return the list of startDates that are in the given year
+            var holidaysDates = [];
+            try {
+                const response = await fetch(api_url);
+                const data = await response.json();
+                for (var i = 0; i < data.length; i++){
+                    var startDate = new Date(data[i].startDate);
+                    if (startDate.getFullYear() === year){
+                        holidaysDates.push(startDate);
+                    }
+                }
+            } catch (error) {
+                console.error(error);
             }
-            else if (dayOfWeek === 1 || dayOfWeek === 2) {
-                return !isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
+            return holidaysDates;
+        }
+        
+        async function init() {
+            const holidaysDates = await getHolidaysDates(year);            
+
+            function isDayAPolishHoliday(date){
+                // check if the given date is a holiday in Poland
+                if (date.getDay() === 0 ){ // niedziela
+                    return true;
+                }
+                for (var i = 0; i < holidaysDates.length; i++){
+                    if (date.toDateString() == holidaysDates[i].toDateString()){
+                        return true;
+                    }
+                }
+                return false;
             }
-             else {
-                return isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
-           }
-        }
-        // Create a new date for the first day of the month
-        var firstDay = new Date(year, month, 1);
-        var dayOfWeek = (firstDay.getDay() + 6) % 7; // Adjust so Monday is 0, Sunday is 6
 
-
-        if (isGierkiDay(today)) {
-            document.getElementById("result").innerHTML = "Tak";
-            document.getElementById("result").classList.add('yes');
-        } else {
-            document.getElementById("result").innerHTML = "Nie";
-            document.getElementById("result").classList.add('no')
-        }
-        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById("date").innerHTML = today.toLocaleDateString("pl-pl", options);
-
-        // Create the calendar
-        var calendar = "<table><tr><th>Pon</th><th>Wto</th><th>Śro</th><th>Czw</th><th>Pią</th><th>Sob</th><th>Nie</th></tr><tr>";
-
-        // Fill in the days of the week
-        for (var i = 0; i < dayOfWeek; i++) {
-            calendar += "<td></td>";
-        }
-
-
-        var daysInMonth = new Date(year, month + 1, 0).getDate();
-        // Fill in the days of the month
-        for (var i = 1; i <= daysInMonth; i++) {
-            if (dayOfWeek === 7) {
-                dayOfWeek = 0;
-                calendar += "</tr><tr>";
+            function findFirstOccurenceOfGivenDayOfWeek(dayOfWeek, year, month){
+                // find the first occurence of the given day of the week in the month
+                var firstOccurence = new Date(year, month, 1);
+                while (firstOccurence.getDay() !== dayOfWeek){
+                    firstOccurence.setDate(firstOccurence.getDate() + 1);
+                }
+                return firstOccurence;
             }
-            var calendarDay = new Date(year, month, i)
 
-            calendar += "<td" + (isGierkiDay(calendarDay) ? " class='special'" : "") + ">" + i + "</td>";
+            function isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month){
+                // check if the first occurence of the given day of the week in the month is a holiday
+                var firstOccurence = findFirstOccurenceOfGivenDayOfWeek(dayOfWeek, year, month);
+                return isDayAPolishHoliday(firstOccurence);
+            }
 
-            dayOfWeek++;
-        }
 
-        // Close the table
-        calendar += "</tr></table>";
+            function isGierkiDay(fullDate) {
+                var month = fullDate.getMonth();
+                var year = fullDate.getFullYear();
+                var isMonthEven = ((month + 1) % 2 === 0);
+                var dayOfWeek = fullDate.getDay();
+                var dayOfMonth = fullDate.getDate();
 
-    // Display the calendar
-    document.getElementById("calendar").innerHTML = calendar;
+                if (dayOfWeek === 0){
+                    return false; // nie ma gierek w niedziele
+                }
+                else if (dayOfWeek === 1 || dayOfWeek === 2) {
+                    if (isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month)){
+                        // drugie zajęcia w 3 tygodniu gdy w pierwszym wypada świeto
+                        return !isMonthEven && (dayOfMonth > 14 && dayOfMonth <= 21);
+                    }
+                    else{
+                        return !isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
+                    }
+                }
+                else {
+                    if (isGivenDayOfWeekFirstOccurenceAHoliday(dayOfWeek, year, month)){
+                        // drugie zajęcia w 3 tygodniu gdy w pierwszym wypada świeto
+                        return isMonthEven && (dayOfMonth > 14 && dayOfMonth <= 21);
+                    }
+                    else{
+                        return isMonthEven && (dayOfMonth > 7 && dayOfMonth <= 14);
+                    }
+                }
+            }
+            // Create a new date for the first day of the month
+            var firstDay = new Date(year, month, 1);
+            var dayOfWeek = (firstDay.getDay() + 6) % 7; // Adjust so Monday is 0, Sunday is 6
+
+
+            if (isGierkiDay(today)) {
+                document.getElementById("result").innerHTML = "Tak";
+                document.getElementById("result").classList.add('yes');
+            } else {
+                document.getElementById("result").innerHTML = "Nie";
+                document.getElementById("result").classList.add('no')
+            }
+            var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById("date").innerHTML = today.toLocaleDateString("pl-pl", options);
+
+            // Create the calendar
+            var calendar = "<table><tr><th>Pon</th><th>Wto</th><th>Śro</th><th>Czw</th><th>Pią</th><th>Sob</th><th>Nie</th></tr><tr>";
+
+            // Fill in the days of the week
+            for (var i = 0; i < dayOfWeek; i++) {
+                calendar += "<td></td>";
+            }
+
+
+            var daysInMonth = new Date(year, month + 1, 0).getDate();
+            // Fill in the days of the month
+            for (var i = 1; i <= daysInMonth; i++) {
+                if (dayOfWeek === 7) {
+                    dayOfWeek = 0;
+                    calendar += "</tr><tr>";
+                }
+                var calendarDay = new Date(year, month, i)
+                
+                var cssClass = ""
+                if (calendarDay.toDateString() === today.toDateString()){
+                    cssClass = "today ";
+                }
+
+                if (isDayAPolishHoliday(calendarDay)){
+                    cssClass += "holiday";
+                } else if (isGierkiDay(calendarDay)){
+                    cssClass += "gierki";
+                } else {
+                    cssClass += "normal";
+                }
+
+                calendar += "<td" + " class='" + cssClass + "'" + ">" + i + "</td>";
+
+                dayOfWeek++;
+            }
+
+            // Close the table
+            calendar += "</tr></table>";
+
+        // Display the calendar
+        document.getElementById("calendar").innerHTML = calendar;
+    }
+    init();
 </script>
+
+<p class="center">Created by <a href="https://github.com/Hiki1">Hiki1</a> <br />
+Refactored by <a href="https://github.com/okraskaj">okraskaj</a>
+</p>
 </body>
 </html>
